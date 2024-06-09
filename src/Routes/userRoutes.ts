@@ -1,55 +1,103 @@
-const RouterU=require("express");
-const routerU=RouterU();
-const zodU=require("zod")
-const user=require("../Middlewares/userMiddleware")
-const userSchema=zodU.object({
-    username:zodU.coerce.string().email(),
-    password:zodU.string().min(8)
-})
+import express, { Request, Response } from 'express';
+import { z } from 'zod';
+import { PrismaClient } from '@prisma/client';
+import userMiddleware from '../Middlewares/userMiddleware';
 
-routerU.post("/fetchData/*",(req,res)=>{
+const routerU = express.Router();
+const prismaU = new PrismaClient();
 
-})
+const userSchema = z.object({
+    username: z.string().email(),
+    firstName: z.string().min(1),
+    lastName: z.string().min(1)
+});
 
-routerU.post("/signin",(req,res)=>{
-
-})
-
-routerU.post("/signup",(req,res)=>{
-    const username=req.headers.username;
-    const password=req.headers.password;
-    const inputValidation=userSchema.safeParse({username:username,password:password});
-    if(!inputValidation.success){
-        res.json({msg:"Inputs are not valid"});
+async function insertUser(username: string, firstName: string, lastName: string): Promise<void> {
+    try {
+        const res = await prismaU.user.create({
+            data: {
+                username,
+                firstName,
+                lastName
+            }
+        });
+        console.log(res);
+    } catch (error) {
+        console.error('Error inserting user:', error);
+        throw error;
     }
+}
+async function getAllUsers(): Promise<any[]> {
+  try {
+      const users = await prismaU.user.findMany();
+      return users;
+  } catch (error) {
+      console.error('Error getting all users:', error);
+      throw error;
+  }
+} 
+routerU.post('/fetchData', async (req: Request, res: Response) => {
+  try {
+    const users = await getAllUsers();
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).json({ msg: 'Error fetching data' });
+  }
+});
 
-    //create(Database)
 
-    res.send("User created Successfully");
-})
+routerU.post('/signin', (req: Request, res: Response) => {
+  // Implement signin logic here
+  res.send('User signed in');
+});
 
-routerU.put("/forgotPwd",(req,res)=>{
+routerU.post('/signup', async (req: Request, res: Response) => {
+  const { username, firstName, lastName } = req.body;
 
-})
+  // Convert username, firstName, and lastName to strings
+  const usernameString = username.toString();
+  const firstNameString = firstName.toString();
+  const lastNameString = lastName.toString();
 
-routerU.post("/ItemsToCart/create",(req,res)=>{
+  // Validate the input
+  const inputValidation = userSchema.safeParse({ username: usernameString, firstName: firstNameString, lastName: lastNameString });
+  if (!inputValidation.success) {
+      return res.status(400).json({ msg: 'Inputs are not valid' });
+  }
 
-})
+  try {
+      // Insert the user into the database
+      await insertUser(usernameString, firstNameString, lastNameString);
+      res.status(201).json({ msg: 'Admin created successfully' });
+  } catch (error) {
+      res.status(500).json({ msg: 'Error creating admin' });
+  }
+});
 
-routerU.get("/ItemsToCart/read",(req,res)=>{
+routerU.post('/ItemsInCart/create', (req: Request, res: Response) => {
+  // Implement create item in cart logic here
+  res.send('Item added to cart');
+});
 
-})
+routerU.get('/ItemsInCart/read', (req: Request, res: Response) => {
+  // Implement read items from cart logic here
+  res.send('Read items from cart');
+});
 
-routerU.delete("/ItemsToCart/delete",(req,res)=>{
+routerU.delete('/ItemsInCart/delete', (req: Request, res: Response) => {
+  // Implement delete item from cart logic here
+  res.send('Item deleted from cart');
+});
 
-})
+routerU.get('/order/*', (req: Request, res: Response) => {
+  // Implement order handling logic here
+  res.send('Order details');
+});
 
-routerU.get("/order/*",(req,res)=>{
+routerU.get('/trackItems', (req: Request, res: Response) => {
+  // Implement item tracking logic here
+  res.send('Tracking items');
+});
 
-})
-
-routerU.get("/trackItems",(req,res)=>{
-
-})
-
-module.exports=routerU;
+export default routerU;

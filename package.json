@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@prisma/client": "^5.15.0",
     "@types/jsonwebtoken": "^9.0.6",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
@@ -7,6 +8,9 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
+    "@types/node": "^20.12.12",
+    "prisma": "^5.15.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
   }
 }

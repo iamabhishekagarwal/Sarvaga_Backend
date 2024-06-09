@@ -1,22 +1,26 @@
-const jwta=require("jsonwebtoken");
-const keyA=require("../config");
-function Admin(req,res,next){
-    const token=req.headers.authorization;
-    const words=token.split(" ");
-    const jwtToken=words[1];
-    try{
-        const decodeValue=jwta.verify(jwtToken,keyA);
-        if(decodeValue.username){
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import keyA from '../config'; // Assuming this is the correct import
+
+function Admin(req: Request, res: Response, next: NextFunction): void {
+    const token: string | undefined  = req.headers.authorization;
+    if (!token) {
+         res.status(401).json({ msg: 'No token provided' });
+    }else{
+        const words: string[] = token.split(' ');
+    const jwtToken: string = words[1];
+    
+    try {
+        const decodeValue: any = jwt.verify(jwtToken, keyA);
+        if (decodeValue.username) {
             next();
+        } else {
+            res.status(403).json({ msg: 'You are not authenticated' });
         }
-        else{
-            res.status(403).json({msg:"You are not authenticated"});
-        }
+    } catch (error) {
+        res.status(403).json({ msg: 'Invalid token' });
     }
-    catch{
-        res.send("Incorrect Inputs");
     }
-
-    module.exports=Admin;
-
 }
+
+export default Admin;

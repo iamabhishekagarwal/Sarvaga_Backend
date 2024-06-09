@@ -1,3 +1,4 @@
 "use strict";
-const secret_key = "sarvaga-server";
-module.exports = secret_key;
+Object.defineProperty(exports, "__esModule", { value: true });
+const secretKey = "sarvaga-server";
+exports.default = secretKey;

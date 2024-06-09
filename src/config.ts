@@ -1,2 +1,2 @@
-const secret_key="sarvaga-server"
-module.exports=secret_key;
+const secretKey: string = "sarvaga-server";
+export default secretKey;
