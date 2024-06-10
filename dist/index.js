@@ -6,9 +6,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const adminRoutes_1 = __importDefault(require("./Routes/adminRoutes")); // Assuming adminRoutes.ts is the correct filename
 const userRoutes_1 = __importDefault(require("./Routes/userRoutes")); // Assuming userRoutes.ts is the correct filename
+const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
-const port = 3000;
+const port = 5172;
 app.use(express_1.default.json());
+app.use((0, cors_1.default)({
+    origin: 'http://localhost:5173',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+    allowedHeaders: 'Content-Type,Authorization'
+}));
 app.use('/admin', adminRoutes_1.default);
 app.use('/user', userRoutes_1.default);
 app.listen(port, () => {
