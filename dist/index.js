@@ -10,12 +10,16 @@ const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
 const port = 5172;
 app.use(express_1.default.json());
-app.use((0, cors_1.default)({
+const corsOptions = {
     origin: 'http://localhost:5173',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
     credentials: true,
-    allowedHeaders: 'Content-Type,Authorization'
-}));
+    allowedHeaders: ['Content-Type', 'Authorization', 'application/json'], // Add other headers as needed
+};
+// Apply CORS options
+app.use((0, cors_1.default)(corsOptions));
+// Handle preflight requests for all routes
+app.options('*', (0, cors_1.default)(corsOptions));
 app.use('/admin', adminRoutes_1.default);
 app.use('/user', userRoutes_1.default);
 app.listen(port, () => {
