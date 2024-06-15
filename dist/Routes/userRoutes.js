@@ -70,6 +70,38 @@ function getSarees() {
         }
     });
 }
+function getSalwaars() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const data = yield prismaU.product.findMany({
+                where: {
+                    category: 'Salwaar'
+                }
+            });
+            return data;
+        }
+        catch (error) {
+            console.error('Error getting the request data: ', error);
+            throw error;
+        }
+    });
+}
+function getLehangas() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const data = yield prismaU.product.findMany({
+                where: {
+                    category: 'Lehanga'
+                }
+            });
+            return data;
+        }
+        catch (error) {
+            console.error('Error getting the request data: ', error);
+            throw error;
+        }
+    });
+}
 routerU.post('/fetchData', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const users = yield getAllUsers();
@@ -111,6 +143,24 @@ routerU.post('/ItemsInCart/create', (req, res) => {
 routerU.get('/products/getsarees', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const data = yield getSarees();
+        res.json(data);
+    }
+    catch (error) {
+        res.status(500).send('Error fetching sarees');
+    }
+}));
+routerU.get('/products/getsalwaars', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const data = yield getSalwaars();
+        res.json(data);
+    }
+    catch (error) {
+        res.status(500).send('Error fetching sarees');
+    }
+}));
+routerU.get('/products/getLehangas', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const data = yield getLehangas();
         res.json(data);
     }
     catch (error) {

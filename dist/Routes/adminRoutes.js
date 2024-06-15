@@ -61,6 +61,54 @@ function insertProduct(category, productName, description, fabric, color, price)
         }
     });
 }
+function getSarees() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const data = yield prismaA.product.findMany({
+                where: {
+                    category: 'Saree'
+                }
+            });
+            return data;
+        }
+        catch (error) {
+            console.error('Error getting the request data: ', error);
+            throw error;
+        }
+    });
+}
+function getSalwaars() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const data = yield prismaA.product.findMany({
+                where: {
+                    category: 'Salwaar'
+                }
+            });
+            return data;
+        }
+        catch (error) {
+            console.error('Error getting the request data: ', error);
+            throw error;
+        }
+    });
+}
+function getLehangas() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const data = yield prismaA.product.findMany({
+                where: {
+                    category: 'Lehanga'
+                }
+            });
+            return data;
+        }
+        catch (error) {
+            console.error('Error getting the request data: ', error);
+            throw error;
+        }
+    });
+}
 routerA.post('/signup', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username, firstName, lastName } = req.body;
     const inputValidation = adminSchema.safeParse({ username, firstName, lastName });
