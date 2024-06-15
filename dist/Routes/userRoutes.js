@@ -37,7 +37,7 @@ function insertUser(username, firstName, lastName) {
             console.log(res);
         }
         catch (error) {
-            console.error('Error inserting user:', error);
+            console.error("Error inserting user:", error);
             throw error;
         }
     });
@@ -49,7 +49,21 @@ function getAllUsers() {
             return users;
         }
         catch (error) {
-            console.error('Error getting all users:', error);
+            console.error("Error getting all users:", error);
+            throw error;
+        }
+    });
+}
+function getProductsByID(id) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const data = yield prismaU.product.findMany({
+                where: { id },
+            });
+            return data;
+        }
+        catch (error) {
+            console.error(`Error getting ${id} products:`, error);
             throw error;
         }
     });
@@ -88,11 +102,14 @@ const insertItem = (userId, productId) => __awaiter(void 0, void 0, void 0, func
         else {
             const existingCartProduct = cart.cartProducts.find((cp) => cp.productId === productId);
             if (!existingCartProduct) {
-                yield prismaU.cartProduct.create({
+                cart = yield prismaU.cart.update({
+                    where: { id: cart.id },
                     data: {
-                        cartId: cart.id,
-                        productId,
+                        cartProducts: {
+                            create: [{ productId }],
+                        },
                     },
+                    include: { cartProducts: { include: { product: true } } },
                 });
             }
         }
@@ -129,31 +146,73 @@ const getItems = (userId) => __awaiter(void 0, void 0, void 0, function* () {
         throw error;
     }
 });
-routerU.get('/fetchData', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const deleteItems = (userId, productId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let cart = yield prismaU.cart.findFirst({
+            where: { ownerId: userId },
+            include: { cartProducts: true },
+        });
+        if (!cart) {
+            console.log("Cart not found");
+            return;
+        }
+        const cartProduct = cart.cartProducts.find((cp) => cp.productId === productId);
+        if (cartProduct) {
+            yield prismaU.cartProduct.delete({
+                where: {
+                    id: cartProduct.id,
+                },
+            });
+            console.log("Product removed from cart");
+        }
+        else {
+            console.log("Product not found in cart");
+        }
+    }
+    catch (error) {
+        console.error("Error deleting item from cart:", error);
+        throw error;
+    }
+});
+routerU.get("/fetchData", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const users = yield getAllUsers();
         res.json(users);
     }
     catch (error) {
-        console.error('Error fetching data:', error);
-        res.status(500).json({ msg: 'Error fetching data' });
+        console.error("Error fetching data:", error);
+        res.status(500).json({ msg: "Error fetching data" });
     }
 }));
-routerU.post('/signup', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+routerU.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { username, firstName, lastName } = req.body;
-    const inputValidation = userSchema.safeParse({ username, firstName, lastName });
+    const inputValidation = userSchema.safeParse({
+        username,
+        firstName,
+        lastName,
+    });
     if (!inputValidation.success) {
-        return res.status(400).json({ msg: 'Inputs are not valid' });
+        return res.status(400).json({ msg: "Inputs are not valid" });
     }
     try {
         yield insertUser(username, firstName, lastName);
-        res.status(201).json({ msg: 'User created successfully' });
+        res.status(201).json({ msg: "User created successfully" });
     }
     catch (error) {
-        res.status(500).json({ msg: 'Error creating user' });
+        res.status(500).json({ msg: "Error creating user" });
     }
 }));
-routerU.get('/products/:category', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+routerU.get("/products/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const id = parseInt(req.params.id);
+    try {
+        const data = yield getProductsByID(id);
+        res.json(data);
+    }
+    catch (error) {
+        res.status(500).send(`Error fetching ${id} products`);
+    }
+}));
+routerU.get("/products/:category", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const category = req.params.category;
     try {
         const data = yield getProductsByCategory(category);
@@ -163,42 +222,45 @@ routerU.get('/products/:category', (req, res) => __awaiter(void 0, void 0, void 
         res.status(500).send(`Error fetching ${category} products`);
     }
 }));
-routerU.post('/carts/additem', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+routerU.post("/carts/additem", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId, productId } = req.body;
         const response = yield insertItem(userId, productId);
         res.json(response);
     }
     catch (error) {
-        console.error('Error adding item to cart:', error);
-        res.status(500).json({ error: 'Failed to add item to cart' });
+        console.error("Error adding item to cart:", error);
+        res.status(500).json({ error: "Failed to add item to cart" });
     }
 }));
-routerU.get('/carts/getItems', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+routerU.get("/carts/getItems", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId } = req.body;
         const response = yield getItems(userId);
         res.json(response);
     }
     catch (error) {
-        console.error('Error getting item from cart:', error);
-        res.status(500).json({ error: 'Failed to get item from cart' });
+        console.error("Error getting item from cart:", error);
+        res.status(500).json({ error: "Failed to get item from cart" });
     }
 }));
-routerU.get('/ItemsInCart/read', (req, res) => {
-    // Implement read items from cart logic here
-    res.send('Read items from cart');
-});
-routerU.delete('/ItemsInCart/delete', (req, res) => {
-    // Implement delete item from cart logic here
-    res.send('Item deleted from cart');
-});
-routerU.get('/order/*', (req, res) => {
+routerU.delete("/ItemsInCart/delete", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId, productId } = req.body;
+        const response = yield deleteItems(userId, productId);
+        res.json(response);
+    }
+    catch (error) {
+        console.error("Error adding item to cart:", error);
+        res.status(500).json({ error: "Failed to add item to cart" });
+    }
+}));
+routerU.get("/order/*", (req, res) => {
     // Implement order handling logic here
-    res.send('Order details');
+    res.send("Order details");
 });
-routerU.get('/trackItems', (req, res) => {
+routerU.get("/trackItems", (req, res) => {
     // Implement item tracking logic here
-    res.send('Tracking items');
+    res.send("Tracking items");
 });
 exports.default = routerU;

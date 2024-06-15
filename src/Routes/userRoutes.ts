@@ -43,6 +43,18 @@ async function getAllUsers(): Promise<any[]> {
   }
 }
 
+async function getProductsByID(id: number): Promise<any[]>{
+  try {
+    const data = await prismaU.product.findMany({
+      where: { id },
+    });
+    return data;
+  } catch (error) {
+    console.error(`Error getting ${id} products:`, error);
+    throw error;
+  }
+}
+
 async function getProductsByCategory(category: string): Promise<any[]> {
   try {
     const data = await prismaU.product.findMany({
@@ -182,7 +194,16 @@ routerU.post("/signup", async (req: Request, res: Response) => {
     res.status(500).json({ msg: "Error creating user" });
   }
 });
+routerU.get("/products/:id", async (req: Request, res: Response) => {
+  const id = parseInt(req.params.id);
 
+  try {
+    const data = await getProductsByID(id);
+    res.json(data);
+  } catch (error) {
+    res.status(500).send(`Error fetching ${id} products`);
+  }
+});
 routerU.get("/products/:category", async (req: Request, res: Response) => {
   const category = req.params.category;
   try {
