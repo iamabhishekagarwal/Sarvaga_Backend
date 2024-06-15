@@ -43,17 +43,21 @@ async function getAllUsers(): Promise<any[]> {
   }
 }
 
-async function getProductsByID(id: number): Promise<any[]>{
+async function getProductByID(id) {
   try {
-    const data = await prismaU.product.findMany({
-      where: { id },
+    const data = await prismaU.product.findUnique({
+      where: {
+        id: Number(id), // Ensure the ID is a number
+      },
     });
     return data;
   } catch (error) {
-    console.error(`Error getting ${id} products:`, error);
+    console.error('Error fetching product by ID:', error);
     throw error;
   }
 }
+
+
 
 async function getProductsByCategory(category: string): Promise<any[]> {
   try {
@@ -198,7 +202,7 @@ routerU.get("/products/:id", async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);
 
   try {
-    const data = await getProductsByID(id);
+    const data = await getProductByID(id);
     res.json(data);
   } catch (error) {
     res.status(500).send(`Error fetching ${id} products`);

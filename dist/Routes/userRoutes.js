@@ -54,16 +54,18 @@ function getAllUsers() {
         }
     });
 }
-function getProductsByID(id) {
+function getProductByID(id) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const data = yield prismaU.product.findMany({
-                where: { id },
+            const data = yield prismaU.product.findUnique({
+                where: {
+                    id: Number(id), // Ensure the ID is a number
+                },
             });
             return data;
         }
         catch (error) {
-            console.error(`Error getting ${id} products:`, error);
+            console.error('Error fetching product by ID:', error);
             throw error;
         }
     });
@@ -205,7 +207,7 @@ routerU.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function
 routerU.get("/products/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = parseInt(req.params.id);
     try {
-        const data = yield getProductsByID(id);
+        const data = yield getProductByID(id);
         res.json(data);
     }
     catch (error) {
