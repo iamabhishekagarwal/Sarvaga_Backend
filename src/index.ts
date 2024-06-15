@@ -1,6 +1,6 @@
 import express from 'express';
 import adminRoutes from './Routes/adminRoutes'; // Assuming adminRoutes.ts is the correct filename
-import userRoutes from './Routes/userRoutes'; // Assuming userRoutes.ts is the correct filename
+import userRoutes from './Routes/userRoutes'; 
 import cors from 'cors';
 
 const app = express();
@@ -23,7 +23,6 @@ app.options('*', cors(corsOptions));
 
 app.use('/admin', adminRoutes);
 app.use('/user', userRoutes);
-
 app.listen(port, () => {
   console.log('Listening to port ' + port);
 });

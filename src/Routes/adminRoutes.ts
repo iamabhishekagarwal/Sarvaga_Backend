@@ -45,6 +45,50 @@ async function insertProduct(category: string, productName: string, description:
       throw error;
     }
   }
+  async function getSarees():Promise<any[]>{
+    try{
+      const data=await prismaA.product.findMany({
+        where: {
+          category: 'Saree'
+      }
+      });
+      return data;
+    }
+    catch(error){
+      console.error('Error getting the request data: ',error);
+      throw error;
+    }
+  }
+  
+  async function getSalwaars():Promise<any[]>{
+    try{
+      const data=await prismaA.product.findMany({
+        where: {
+          category: 'Salwaar'
+      }
+      });
+      return data;
+    }
+    catch(error){
+      console.error('Error getting the request data: ',error);
+      throw error;
+    }
+  }
+  
+  async function getLehangas():Promise<any[]>{
+    try{
+      const data=await prismaA.product.findMany({
+        where: {
+          category: 'Lehanga'
+      }
+      });
+      return data;
+    }
+    catch(error){
+      console.error('Error getting the request data: ',error);
+      throw error;
+    }
+  }
 routerA.post('/signup', async (req: Request, res: Response) => {
     const { username, firstName, lastName } = req.body;
 

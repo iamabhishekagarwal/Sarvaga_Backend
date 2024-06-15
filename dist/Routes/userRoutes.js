@@ -17,6 +17,8 @@ const zod_1 = require("zod");
 const client_1 = require("@prisma/client");
 const routerU = express_1.default.Router();
 const prismaU = new client_1.PrismaClient();
+const dotenv = require('dotenv');
+dotenv.config();
 const userSchema = zod_1.z.object({
     username: zod_1.z.string().email(),
     firstName: zod_1.z.string().min(1),
@@ -48,6 +50,22 @@ function getAllUsers() {
         }
         catch (error) {
             console.error('Error getting all users:', error);
+            throw error;
+        }
+    });
+}
+function getSarees() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const data = yield prismaU.product.findMany({
+                where: {
+                    category: 'Saree'
+                }
+            });
+            return data;
+        }
+        catch (error) {
+            console.error('Error getting the request data: ', error);
             throw error;
         }
     });
@@ -90,6 +108,15 @@ routerU.post('/ItemsInCart/create', (req, res) => {
     // Implement create item in cart logic here
     res.send('Item added to cart');
 });
+routerU.get('/products/getsarees', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const data = yield getSarees();
+        res.json(data);
+    }
+    catch (error) {
+        res.status(500).send('Error fetching sarees');
+    }
+}));
 routerU.get('/ItemsInCart/read', (req, res) => {
     // Implement read items from cart logic here
     res.send('Read items from cart');

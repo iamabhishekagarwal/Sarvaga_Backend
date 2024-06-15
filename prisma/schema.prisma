@@ -26,6 +26,7 @@ model Admin {
 }
 model Product {
   id         Int      @id @default(autoincrement())
+  specialCategory String?
   category   String
   productName String
   description String

@@ -40,55 +40,50 @@ async function getAllUsers(): Promise<any[]> {
   }
 }
 
-
-routerU.post("/",async(req,res,next)=>{
-    res.header('Access-Control-Allow-Origin','http://localhost:5172');
-
-    res.header('Referrer-Policy','no-referrer-when-downgrade');
-
-    const redirectUrl='http://localhost:5172/user'
-    const oAuth2Client =new OAuth2Client(
-      process.env.CLIENT_ID,
-      process.env.CLIENT_SECRET,
-      redirectUrl
-    );
-    const authorizeUrl = oAuth2Client.generateAuthUrl({
-      access_type:'offline',
-      scope:'https://www.googleapis.com/auth/userinfo.profile openid',
-      prompt:'consent'
+async function getSarees():Promise<any[]>{
+  try{
+    const data=await prismaU.product.findMany({
+      where: {
+        category: 'Saree'
+    }
     });
-    res.json({url:authorizeUrl})
-})
-
-async function getUserdata(access_token) {
-  const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token${access_token}`);
-  const data=await response.json();
-  console.log('data',data);
+    return data;
+  }
+  catch(error){
+    console.error('Error getting the request data: ',error);
+    throw error;
+  }
 }
 
-routerU.get('/',async (req,res,next)=>{
-  const code = req.query.code;
-  if (typeof code !== 'string') {
-    return res.status(400).send('Invalid code parameter');
-  }
+async function getSalwaars():Promise<any[]>{
   try{
-    const redirectUrl = 'http://localhost:5172/user'
-    const oAuth2Client= new OAuth2Client(
-      process.env.CLIENT_ID,
-      process.env.CLIENT_SECRET,
-      redirectUrl
-    );
-    const res = await oAuth2Client.getToken(code);
-    await oAuth2Client.setCredentials(res.tokens);
-    console.log("Tokens acquired");
-    const user = oAuth2Client.credentials;
-    await(getUserdata(user.access_token))
+    const data=await prismaU.product.findMany({
+      where: {
+        category: 'Salwaar'
+    }
+    });
+    return data;
   }
-  catch(err){
-    res.json({"msg":"Error Signing in with google"});
+  catch(error){
+    console.error('Error getting the request data: ',error);
+    throw error;
   }
-});
+}
 
+async function getLehangas():Promise<any[]>{
+  try{
+    const data=await prismaU.product.findMany({
+      where: {
+        category: 'Lehanga'
+    }
+    });
+    return data;
+  }
+  catch(error){
+    console.error('Error getting the request data: ',error);
+    throw error;
+  }
+}
 routerU.post('/fetchData', async (req: Request, res: Response) => {
   try {
     const users = await getAllUsers();
@@ -98,9 +93,6 @@ routerU.post('/fetchData', async (req: Request, res: Response) => {
     res.status(500).json({ msg: 'Error fetching data' });
   }
 });
-
-
-
 
 routerU.post('/signin', (req: Request, res: Response) => {
   // Implement signin logic here
@@ -134,7 +126,30 @@ routerU.post('/ItemsInCart/create', (req: Request, res: Response) => {
   // Implement create item in cart logic here
   res.send('Item added to cart');
 });
-
+routerU.get('/products/getsarees', async (req, res) => {
+  try {
+      const data = await getSarees();
+      res.json(data);
+  } catch (error) {
+      res.status(500).send('Error fetching sarees');
+  }
+});
+routerU.get('/products/getsalwaars', async (req, res) => {
+  try {
+      const data = await getSalwaars();
+      res.json(data);
+  } catch (error) {
+      res.status(500).send('Error fetching sarees');
+  }
+});
+routerU.get('/products/getLehangas', async (req, res) => {
+  try {
+      const data = await getLehangas();
+      res.json(data);
+  } catch (error) {
+      res.status(500).send('Error fetching sarees');
+  }
+});
 routerU.get('/ItemsInCart/read', (req: Request, res: Response) => {
   // Implement read items from cart logic here
   res.send('Read items from cart');
