@@ -1,173 +1,238 @@
-import express, { Request, Response } from 'express';
-import { string, z } from 'zod';
-import { PrismaClient } from '@prisma/client';
-import userMiddleware from '../Middlewares/userMiddleware';
-import { OAuth2Client } from 'google-auth-library';
-import { url } from 'inspector';
+import express, { Request, Response } from "express";
+import { z } from "zod";
+import { PrismaClient } from "@prisma/client";
+import dotenv from "dotenv";
 
 const routerU = express.Router();
 const prismaU = new PrismaClient();
-const dotenv=require('dotenv');
 dotenv.config();
+
 const userSchema = z.object({
-    username: z.string().email(),
-    firstName: z.string().min(1),
-    lastName: z.string().min(1)
+  username: z.string().email(),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
 });
 
-async function insertUser(username: string, firstName: string, lastName: string): Promise<void> {
-    try {
-        const res = await prismaU.user.create({
-            data: {
-                username,
-                firstName,
-                lastName
-            }
-        });
-        console.log(res);
-    } catch (error) {
-        console.error('Error inserting user:', error);
-        throw error;
-    }
+async function insertUser(
+  username: string,
+  firstName: string,
+  lastName: string
+): Promise<void> {
+  try {
+    const res = await prismaU.user.create({
+      data: {
+        username,
+        firstName,
+        lastName,
+      },
+    });
+    console.log(res);
+  } catch (error) {
+    console.error("Error inserting user:", error);
+    throw error;
+  }
 }
+
 async function getAllUsers(): Promise<any[]> {
   try {
-      const users = await prismaU.user.findMany();
-      return users;
+    const users = await prismaU.user.findMany();
+    return users;
   } catch (error) {
-      console.error('Error getting all users:', error);
-      throw error;
-  }
-}
-
-async function getSarees():Promise<any[]>{
-  try{
-    const data=await prismaU.product.findMany({
-      where: {
-        category: 'Saree'
-    }
-    });
-    return data;
-  }
-  catch(error){
-    console.error('Error getting the request data: ',error);
+    console.error("Error getting all users:", error);
     throw error;
   }
 }
 
-async function getSalwaars():Promise<any[]>{
-  try{
-    const data=await prismaU.product.findMany({
-      where: {
-        category: 'Salwaar'
-    }
+async function getProductsByCategory(category: string): Promise<any[]> {
+  try {
+    const data = await prismaU.product.findMany({
+      where: { category },
     });
     return data;
-  }
-  catch(error){
-    console.error('Error getting the request data: ',error);
+  } catch (error) {
+    console.error(`Error getting ${category} products:`, error);
     throw error;
   }
 }
 
-async function getLehangas():Promise<any[]>{
-  try{
-    const data=await prismaU.product.findMany({
-      where: {
-        category: 'Lehanga'
-    }
+const insertItem = async (userId: number, productId: number) => {
+  try {
+    let cart = await prismaU.cart.findFirst({
+      where: { ownerId: userId },
+      include: { cartProducts: true },
     });
-    return data;
-  }
-  catch(error){
-    console.error('Error getting the request data: ',error);
+
+    if (!cart) {
+      cart = await prismaU.cart.create({
+        data: {
+          ownerId: userId,
+          cartProducts: {
+            create: [{ productId }],
+          },
+        },
+        include: { cartProducts: true },
+      });
+    } else {
+      const existingCartProduct = cart.cartProducts.find(
+        (cp) => cp.productId === productId
+      );
+
+      if (!existingCartProduct) {
+        cart = await prismaU.cart.update({
+          where: { id: cart.id },
+          data: {
+            cartProducts: {
+              create: [{ productId }],
+            },
+          },
+          include: { cartProducts: { include: { product: true } } },
+        });
+      }
+    }
+
+    const updatedCart = await prismaU.cart.findUnique({
+      where: { id: cart.id },
+      include: { cartProducts: { include: { product: true } } },
+    });
+
+    return updatedCart;
+  } catch (error) {
     throw error;
   }
-}
-routerU.post('/fetchData', async (req: Request, res: Response) => {
+};
+
+
+const getItems = async (userId: number) => {
+  try {
+    let cart = await prismaU.cart.findFirst({
+      where: { ownerId: userId },
+      include: { cartProducts: true },
+    });
+    if (!cart) {
+      cart = await prismaU.cart.create({
+        data: {
+          ownerId: userId,
+          cartProducts: {
+            create: [],
+          },
+        },
+        include: { cartProducts: { include: { product: true } } },
+      });
+    }
+    return cart.cartProducts;
+  } catch (error) {
+    throw error;
+  }
+};
+const deleteItems = async (userId: number, productId: number) => {
+  try {
+    let cart = await prismaU.cart.findFirst({
+      where: { ownerId: userId },
+      include: { cartProducts: true },
+    });
+    if (!cart) {
+      console.log("Cart not found");
+      return;
+    }
+    const cartProduct = cart.cartProducts.find(
+      (cp) => cp.productId === productId
+    );
+    if (cartProduct) {
+      await prismaU.cartProduct.delete({
+        where: {
+          id: cartProduct.id,
+        },
+      });
+      console.log("Product removed from cart");
+    } else {
+      console.log("Product not found in cart");
+    }
+  } catch (error) {
+    console.error("Error deleting item from cart:", error);
+    throw error;
+  }
+};
+
+routerU.get("/fetchData", async (req: Request, res: Response) => {
   try {
     const users = await getAllUsers();
     res.json(users);
   } catch (error) {
-    console.error('Error fetching data:', error);
-    res.status(500).json({ msg: 'Error fetching data' });
+    console.error("Error fetching data:", error);
+    res.status(500).json({ msg: "Error fetching data" });
   }
 });
 
-routerU.post('/signin', (req: Request, res: Response) => {
-  // Implement signin logic here
-  res.send('User signed in');
-});
-
-routerU.post('/signup', async (req: Request, res: Response) => {
+routerU.post("/signup", async (req: Request, res: Response) => {
   const { username, firstName, lastName } = req.body;
 
-  // Convert username, firstName, and lastName to strings
-  const usernameString = username.toString();
-  const firstNameString = firstName.toString();
-  const lastNameString = lastName.toString();
-
-  // Validate the input
-  const inputValidation = userSchema.safeParse({ username: usernameString, firstName: firstNameString, lastName: lastNameString });
+  const inputValidation = userSchema.safeParse({
+    username,
+    firstName,
+    lastName,
+  });
   if (!inputValidation.success) {
-      return res.status(400).json({ msg: 'Inputs are not valid' });
+    return res.status(400).json({ msg: "Inputs are not valid" });
   }
 
   try {
-      // Insert the user into the database
-      await insertUser(usernameString, firstNameString, lastNameString);
-      res.status(201).json({ msg: 'Admin created successfully' });
+    await insertUser(username, firstName, lastName);
+    res.status(201).json({ msg: "User created successfully" });
   } catch (error) {
-      res.status(500).json({ msg: 'Error creating admin' });
+    res.status(500).json({ msg: "Error creating user" });
   }
 });
 
-routerU.post('/ItemsInCart/create', (req: Request, res: Response) => {
-  // Implement create item in cart logic here
-  res.send('Item added to cart');
-});
-routerU.get('/products/getsarees', async (req, res) => {
+routerU.get("/products/:category", async (req: Request, res: Response) => {
+  const category = req.params.category;
   try {
-      const data = await getSarees();
-      res.json(data);
+    const data = await getProductsByCategory(category);
+    res.json(data);
   } catch (error) {
-      res.status(500).send('Error fetching sarees');
+    res.status(500).send(`Error fetching ${category} products`);
   }
-});
-routerU.get('/products/getsalwaars', async (req, res) => {
-  try {
-      const data = await getSalwaars();
-      res.json(data);
-  } catch (error) {
-      res.status(500).send('Error fetching sarees');
-  }
-});
-routerU.get('/products/getLehangas', async (req, res) => {
-  try {
-      const data = await getLehangas();
-      res.json(data);
-  } catch (error) {
-      res.status(500).send('Error fetching sarees');
-  }
-});
-routerU.get('/ItemsInCart/read', (req: Request, res: Response) => {
-  // Implement read items from cart logic here
-  res.send('Read items from cart');
 });
 
-routerU.delete('/ItemsInCart/delete', (req: Request, res: Response) => {
-  // Implement delete item from cart logic here
-  res.send('Item deleted from cart');
+routerU.post("/carts/additem", async (req: Request, res: Response) => {
+  try {
+    const { userId, productId } = req.body;
+    const response = await insertItem(userId, productId);
+    res.json(response);
+  } catch (error) {
+    console.error("Error adding item to cart:", error);
+    res.status(500).json({ error: "Failed to add item to cart" });
+  }
+});
+routerU.get("/carts/getItems", async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.body;
+    const response = await getItems(userId);
+    res.json(response);
+  } catch (error) {
+    console.error("Error getting item from cart:", error);
+    res.status(500).json({ error: "Failed to get item from cart" });
+  }
 });
 
-routerU.get('/order/*', (req: Request, res: Response) => {
+routerU.delete("/ItemsInCart/delete", async (req: Request, res: Response) => {
+  try {
+    const { userId, productId } = req.body;
+    const response = await deleteItems(userId, productId);
+    res.json(response);
+  } catch (error) {
+    console.error("Error adding item to cart:", error);
+    res.status(500).json({ error: "Failed to add item to cart" });
+  }
+});
+
+routerU.get("/order/*", (req: Request, res: Response) => {
   // Implement order handling logic here
-  res.send('Order details');
+  res.send("Order details");
 });
 
-routerU.get('/trackItems', (req: Request, res: Response) => {
+routerU.get("/trackItems", (req: Request, res: Response) => {
   // Implement item tracking logic here
-  res.send('Tracking items');
+  res.send("Tracking items");
 });
 
 export default routerU;
