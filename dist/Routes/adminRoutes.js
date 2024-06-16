@@ -17,7 +17,13 @@ const zod_1 = require("zod");
 const client_1 = require("@prisma/client");
 const cors_1 = __importDefault(require("cors"));
 const routerA = express_1.default.Router();
-routerA.use((0, cors_1.default)());
+const corsOptions = {
+    origin: "http://localhost:5173",
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
+    credentials: true,
+    allowedHeaders: ["Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Access-Control-Allow-Methods", "Content-Type",], // Add other headers as needed
+};
+routerA.use((0, cors_1.default)(corsOptions));
 const prismaA = new client_1.PrismaClient();
 routerA.use(express_1.default.json());
 const adminSchema = zod_1.z.object({

@@ -5,7 +5,13 @@ import { PrismaClient } from "@prisma/client";
 import cors from "cors";
 
 const routerA = express.Router();
-routerA.use(cors());
+const corsOptions = {
+  origin: "http://localhost:5173",
+  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
+  credentials: true,
+  allowedHeaders: ["Access-Control-Allow-Origin","Access-Control-Allow-Headers","Access-Control-Allow-Methods","Content-Type",], // Add other headers as needed
+};
+routerA.use(cors(corsOptions));
 const prismaA = new PrismaClient();
 routerA.use(express.json());
 const adminSchema = z.object({
@@ -147,9 +153,8 @@ routerA.post("/signup", async (req: Request, res: Response) => {
   }
 });
 
-routerA.post("/signin",async (req: Request, res: Response) => {
+routerA.post("/signin", async (req: Request, res: Response) => {
   const { username, email, name } = req.body;
-
   const inputValidation = adminSchema.safeParse({
     username,
     email,
