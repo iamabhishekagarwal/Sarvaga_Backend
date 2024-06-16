@@ -57,15 +57,13 @@ function getAllUsers() {
 function getProductByID(id) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const data = yield prismaU.product.findUnique({
-                where: {
-                    id: Number(id), // Ensure the ID is a number
-                },
+            const product = yield prismaU.product.findUnique({
+                where: { id },
             });
-            return data;
+            return product;
         }
         catch (error) {
-            console.error('Error fetching product by ID:', error);
+            console.error("Error fetching product by ID:", error);
             throw error;
         }
     });
@@ -204,18 +202,28 @@ routerU.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function
         res.status(500).json({ msg: "Error creating user" });
     }
 }));
-routerU.get("/products/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+routerU.get("/products/ID/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid product ID" });
+    }
     try {
-        const data = yield getProductByID(id);
-        res.json(data);
+        const product = yield getProductByID(id);
+        if (product) {
+            res.json(product);
+        }
+        else {
+            res.status(404).json({ error: "Product not found" });
+        }
     }
     catch (error) {
-        res.status(500).send(`Error fetching ${id} products`);
+        console.error("Error fetching product:", error);
+        res.status(500).send("Error fetching product");
     }
 }));
 routerU.get("/products/:category", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const category = req.params.category;
+    console.log(category);
     try {
         const data = yield getProductsByCategory(category);
         res.json(data);
