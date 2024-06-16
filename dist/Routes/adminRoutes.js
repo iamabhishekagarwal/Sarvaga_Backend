@@ -15,15 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const zod_1 = require("zod");
 const client_1 = require("@prisma/client");
-const cors_1 = __importDefault(require("cors"));
 const routerA = express_1.default.Router();
-const corsOptions = {
-    origin: "http://localhost:5173",
-    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
-    credentials: true,
-    allowedHeaders: ["Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Access-Control-Allow-Methods", "Content-Type",], // Add other headers as needed
-};
-routerA.use((0, cors_1.default)(corsOptions));
 const prismaA = new client_1.PrismaClient();
 routerA.use(express_1.default.json());
 const adminSchema = zod_1.z.object({
@@ -45,6 +37,18 @@ function insertAdmin(username, email, name) {
         }
         catch (error) {
             console.error("Error inserting user:", error);
+            throw error;
+        }
+    });
+}
+function getAllProducts() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const product = yield prismaA.product.findMany();
+            return product;
+        }
+        catch (error) {
+            console.error("Error fetching product by ID:", error);
             throw error;
         }
     });
@@ -181,6 +185,21 @@ routerA.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function
     }
     catch (error) {
         res.status(500).json({ msg: "Error Verifying admin" });
+    }
+}));
+routerA.get("/products/all", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const productsArr = yield getAllProducts();
+        if (productsArr) {
+            res.json(productsArr);
+        }
+        else {
+            res.status(400).json({ error: "Invalid product ID" });
+        }
+    }
+    catch (error) {
+        console.error("Error fetching products:", error);
+        res.status(500).send("Error fetching products");
     }
 }));
 routerA.post("/products/addProducts", (req, res) => __awaiter(void 0, void 0, void 0, function* () {

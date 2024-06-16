@@ -9,14 +9,19 @@ const port = 5172;
 app.use(express.json());
 
 const corsOptions = {
-  origin: 'http://localhost:5173',
-  methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+  origin: "http://localhost:5173",
+  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'application/json'], // Add other headers as needed
+  allowedHeaders: [
+    "Access-Control-Allow-Origin",
+    "Access-Control-Allow-Headers",
+    "Access-Control-Allow-Methods",
+    "Content-Type",
+  ], // Add other headers as needed
 };
 
 // Apply CORS options
-// app.use(cors(corsOptions));
+app.use(cors(corsOptions));
 
 // Handle preflight requests for all routes
 // app.options('*', cors(corsOptions));

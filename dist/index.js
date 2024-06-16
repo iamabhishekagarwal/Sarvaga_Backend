@@ -6,17 +6,23 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const adminRoutes_1 = __importDefault(require("./Routes/adminRoutes")); // Assuming adminRoutes.ts is the correct filename
 const userRoutes_1 = __importDefault(require("./Routes/userRoutes"));
+const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
 const port = 5172;
 app.use(express_1.default.json());
 const corsOptions = {
-    origin: 'http://localhost:5173',
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
+    origin: "http://localhost:5173",
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'application/json'], // Add other headers as needed
+    allowedHeaders: [
+        "Access-Control-Allow-Origin",
+        "Access-Control-Allow-Headers",
+        "Access-Control-Allow-Methods",
+        "Content-Type",
+    ], // Add other headers as needed
 };
 // Apply CORS options
-// app.use(cors(corsOptions));
+app.use((0, cors_1.default)(corsOptions));
 // Handle preflight requests for all routes
 // app.options('*', cors(corsOptions));
 app.use('/admin', adminRoutes_1.default);

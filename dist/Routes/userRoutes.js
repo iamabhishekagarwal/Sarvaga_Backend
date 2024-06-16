@@ -54,6 +54,18 @@ function getAllUsers() {
         }
     });
 }
+function getAllProducts() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const product = yield prismaU.product.findMany();
+            return product;
+        }
+        catch (error) {
+            console.error("Error fetching product by ID:", error);
+            throw error;
+        }
+    });
+}
 function getProductByID(id) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -200,6 +212,21 @@ routerU.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function
     }
     catch (error) {
         res.status(500).json({ msg: "Error creating user" });
+    }
+}));
+routerU.get("/products/all", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const productsArr = yield getAllProducts();
+        if (productsArr) {
+            res.json(productsArr);
+        }
+        else {
+            res.status(400).json({ error: "Invalid product ID" });
+        }
+    }
+    catch (error) {
+        console.error("Error fetching products:", error);
+        res.status(500).send("Error fetching products");
     }
 }));
 routerU.get("/products/ID/:id", (req, res) => __awaiter(void 0, void 0, void 0, function* () {

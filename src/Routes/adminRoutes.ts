@@ -1,17 +1,8 @@
 import express, { Request, Response } from "express";
 import { string, z } from "zod";
 import adminMiddleware from "../Middlewares/adminMiddleware";
-import { PrismaClient } from "@prisma/client";
-import cors from "cors";
-
+import { PrismaClient,Product } from "@prisma/client";
 const routerA = express.Router();
-const corsOptions = {
-  origin: "http://localhost:5173",
-  methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
-  credentials: true,
-  allowedHeaders: ["Access-Control-Allow-Origin","Access-Control-Allow-Headers","Access-Control-Allow-Methods","Content-Type",], // Add other headers as needed
-};
-routerA.use(cors(corsOptions));
 const prismaA = new PrismaClient();
 routerA.use(express.json());
 const adminSchema = z.object({
@@ -41,6 +32,16 @@ async function insertAdmin(
     return res;
   } catch (error) {
     console.error("Error inserting user:", error);
+    throw error;
+  }
+}
+
+async function getAllProducts():Promise<Product[] | null> {
+  try {
+    const product = await prismaA.product.findMany();
+    return product;
+  } catch (error) {
+    console.error("Error fetching product by ID:", error);
     throw error;
   }
 }
@@ -178,7 +179,19 @@ routerA.post("/signin", async (req: Request, res: Response) => {
     res.status(500).json({ msg: "Error Verifying admin" });
   }
 });
-
+routerA.get("/products/all", async (req: Request, res: Response) => {
+  try {
+    const productsArr = await getAllProducts();
+    if (productsArr) {
+      res.json(productsArr);
+    } else {
+      res.status(400).json({ error: "Invalid product ID" });
+    }
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    res.status(500).send("Error fetching products");
+  }
+});
 routerA.post("/products/addProducts", async (req: Request, res: Response) => {
   const { category, productName, description, fabric, color, price } = req.body;
   try {
