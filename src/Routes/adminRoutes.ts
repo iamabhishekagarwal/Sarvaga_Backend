@@ -45,6 +45,30 @@ async function getAllProducts():Promise<Product[] | null> {
     throw error;
   }
 }
+async function deleteProductById(id: number): Promise<Product | null> {
+  try {
+    await prismaA.cartProduct.deleteMany({
+      where: {
+        productId: id,
+      },
+    });
+
+    const product = await prismaA.product.delete({
+      where: {
+        id,
+      },
+    });
+
+    if (!product) {
+      return null;
+    }
+
+    return product;
+  } catch (error) {
+    console.error("Error deleting product by ID:", error);
+    throw error;
+  }
+}
 
 async function checkAdmin(username: string, email: string, name: string): Promise<{isAdmin:Boolean}> {
   try {
@@ -64,6 +88,7 @@ async function checkAdmin(username: string, email: string, name: string): Promis
 };
 
 async function insertProduct(
+  specialCategory:string,
   category: string,
   productName: string,
   description: string,
@@ -193,9 +218,18 @@ routerA.get("/products/all", async (req: Request, res: Response) => {
   }
 });
 routerA.post("/products/addProducts", async (req: Request, res: Response) => {
-  const { category, productName, description, fabric, color, price } = req.body;
+  const {
+    specialCategory,
+    category,
+    productName,
+    description,
+    fabric,
+    color,
+    price,
+  } = req.body;
   try {
     const newProduct = await insertProduct(
+      specialCategory,
       category,
       productName,
       description,
@@ -213,7 +247,23 @@ routerA.post("/products/addProducts", async (req: Request, res: Response) => {
       .json({ message: "Error adding product", error: error.message });
   }
 });
-
+routerA.delete("/products/delete", async (req: Request, res: Response) => {
+  const { id } = req.body;
+  try {
+    const deletedProduct = await deleteProductById(parseInt(id));
+    if (!deletedProduct) {
+      res.status(400).json({ msg: "Invalid ID" });
+    }
+    res
+      .status(200)
+      .json({ msg: "product deleted successfully", product: deletedProduct });
+  } catch (error: any) {
+    console.error("Error deleting product:", error);
+    res
+      .status(500)
+      .json({ message: "Error deleting product", error: error.message });
+  }
+});
 routerA.put("/orders/*", (req: Request, res: Response) => {
   // Implement orders update logic here
   res.send("Orders update endpoint");

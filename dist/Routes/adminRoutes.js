@@ -53,6 +53,30 @@ function getAllProducts() {
         }
     });
 }
+function deleteProductById(id) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield prismaA.cartProduct.deleteMany({
+                where: {
+                    productId: id,
+                },
+            });
+            const product = yield prismaA.product.delete({
+                where: {
+                    id,
+                },
+            });
+            if (!product) {
+                return null;
+            }
+            return product;
+        }
+        catch (error) {
+            console.error("Error deleting product by ID:", error);
+            throw error;
+        }
+    });
+}
 function checkAdmin(username, email, name) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -73,7 +97,7 @@ function checkAdmin(username, email, name) {
     });
 }
 ;
-function insertProduct(category, productName, description, fabric, color, price) {
+function insertProduct(specialCategory, category, productName, description, fabric, color, price) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const res = yield prismaA.product.create({
@@ -203,9 +227,9 @@ routerA.get("/products/all", (req, res) => __awaiter(void 0, void 0, void 0, fun
     }
 }));
 routerA.post("/products/addProducts", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { category, productName, description, fabric, color, price } = req.body;
+    const { specialCategory, category, productName, description, fabric, color, price, } = req.body;
     try {
-        const newProduct = yield insertProduct(category, productName, description, fabric, color, price);
+        const newProduct = yield insertProduct(specialCategory, category, productName, description, fabric, color, price);
         res
             .status(201)
             .json({ message: "Product added successfully", product: newProduct });
@@ -215,6 +239,24 @@ routerA.post("/products/addProducts", (req, res) => __awaiter(void 0, void 0, vo
         res
             .status(500)
             .json({ message: "Error adding product", error: error.message });
+    }
+}));
+routerA.delete("/products/delete", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.body;
+    try {
+        const deletedProduct = yield deleteProductById(parseInt(id));
+        if (!deletedProduct) {
+            res.status(400).json({ msg: "Invalid ID" });
+        }
+        res
+            .status(200)
+            .json({ msg: "product deleted successfully", product: deletedProduct });
+    }
+    catch (error) {
+        console.error("Error deleting product:", error);
+        res
+            .status(500)
+            .json({ message: "Error deleting product", error: error.message });
     }
 }));
 routerA.put("/orders/*", (req, res) => {
