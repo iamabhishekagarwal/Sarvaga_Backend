@@ -2,12 +2,14 @@ import express, { Request, Response } from "express";
 import { string, z } from "zod";
 import adminMiddleware from "../Middlewares/adminMiddleware";
 import { PrismaClient } from "@prisma/client";
+import cors from "cors";
 
 const routerA = express.Router();
+routerA.use(cors());
 const prismaA = new PrismaClient();
-
+routerA.use(express.json());
 const adminSchema = z.object({
-  username: z.string().min(8,"Please enter A valid username"),
+  username: z.string(),
   email: z.string().email(),
   name : z.string()
 });

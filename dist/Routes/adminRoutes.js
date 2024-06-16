@@ -15,10 +15,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const zod_1 = require("zod");
 const client_1 = require("@prisma/client");
+const cors_1 = __importDefault(require("cors"));
 const routerA = express_1.default.Router();
+routerA.use((0, cors_1.default)());
 const prismaA = new client_1.PrismaClient();
+routerA.use(express_1.default.json());
 const adminSchema = zod_1.z.object({
-    username: zod_1.z.string().min(8, "Please enter A valid username"),
+    username: zod_1.z.string(),
     email: zod_1.z.string().email(),
     name: zod_1.z.string()
 });
