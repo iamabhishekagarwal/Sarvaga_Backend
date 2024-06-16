@@ -250,8 +250,8 @@ routerU.get("/carts/getItems", (req, res) => __awaiter(void 0, void 0, void 0, f
         res.json(response);
     }
     catch (error) {
-        console.error("Error getting item from cart:", error);
         res.status(500).json({ error: "Failed to get item from cart" });
+        console.error("Error getting item from cart:", error);
     }
 }));
 routerU.delete("/ItemsInCart/delete", (req, res) => __awaiter(void 0, void 0, void 0, function* () {

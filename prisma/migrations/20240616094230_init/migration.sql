@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Admin" ALTER COLUMN "lastName" DROP NOT NULL,
+ALTER COLUMN "family_name" DROP NOT NULL,
+ALTER COLUMN "nickname" DROP NOT NULL,
+ALTER COLUMN "updated_at" DROP NOT NULL;

@@ -18,28 +18,48 @@ const client_1 = require("@prisma/client");
 const routerA = express_1.default.Router();
 const prismaA = new client_1.PrismaClient();
 const adminSchema = zod_1.z.object({
-    username: zod_1.z.string().email(),
-    firstName: zod_1.z.string().min(1),
-    lastName: zod_1.z.string().min(1)
+    username: zod_1.z.string().min(8, "Please enter A valid username"),
+    email: zod_1.z.string().email(),
+    name: zod_1.z.string()
 });
-function insertAdmin(username, firstName, lastName) {
+function insertAdmin(username, email, name) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const res = yield prismaA.user.create({
+            const res = yield prismaA.admin.create({
                 data: {
                     username,
-                    firstName,
-                    lastName
-                }
+                    email,
+                    name,
+                },
             });
-            console.log(res);
+            return res;
         }
         catch (error) {
-            console.error('Error inserting user:', error);
+            console.error("Error inserting user:", error);
             throw error;
         }
     });
 }
+function checkAdmin(username, email, name) {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            const res = yield prismaA.admin.findFirst({
+                where: {
+                    email,
+                },
+            });
+            if (!res) {
+                return { isAdmin: false };
+            }
+            return { isAdmin: true };
+        }
+        catch (error) {
+            console.error("Error inserting user:", error);
+            throw error;
+        }
+    });
+}
+;
 function insertProduct(category, productName, description, fabric, color, price) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -50,13 +70,13 @@ function insertProduct(category, productName, description, fabric, color, price)
                     description,
                     fabric,
                     color,
-                    price
-                }
+                    price,
+                },
             });
             return res;
         }
         catch (error) {
-            console.error('Error inserting product:', error);
+            console.error("Error inserting product:", error);
             throw error;
         }
     });
@@ -66,13 +86,13 @@ function getSarees() {
         try {
             const data = yield prismaA.product.findMany({
                 where: {
-                    category: 'Saree'
-                }
+                    category: "Saree",
+                },
             });
             return data;
         }
         catch (error) {
-            console.error('Error getting the request data: ', error);
+            console.error("Error getting the request data: ", error);
             throw error;
         }
     });
@@ -82,13 +102,13 @@ function getSalwaars() {
         try {
             const data = yield prismaA.product.findMany({
                 where: {
-                    category: 'Salwaar'
-                }
+                    category: "Salwaar",
+                },
             });
             return data;
         }
         catch (error) {
-            console.error('Error getting the request data: ', error);
+            console.error("Error getting the request data: ", error);
             throw error;
         }
     });
@@ -98,52 +118,83 @@ function getLehangas() {
         try {
             const data = yield prismaA.product.findMany({
                 where: {
-                    category: 'Lehanga'
-                }
+                    category: "Lehanga",
+                },
             });
             return data;
         }
         catch (error) {
-            console.error('Error getting the request data: ', error);
+            console.error("Error getting the request data: ", error);
             throw error;
         }
     });
 }
-routerA.post('/signup', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { username, firstName, lastName } = req.body;
-    const inputValidation = adminSchema.safeParse({ username, firstName, lastName });
+routerA.post("/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { username, email, name } = req.body;
+    const inputValidation = adminSchema.safeParse({
+        username,
+        email,
+        name,
+    });
     if (!inputValidation.success) {
-        return res.status(400).json({ msg: 'Inputs are not valid' });
+        return res.status(400).json({ msg: "Inputs are not valid" });
     }
     try {
-        yield insertAdmin(username, firstName, lastName);
-        res.status(201).json({ msg: 'Admin created successfully' });
+        const response = yield insertAdmin(username, email, name);
+        res.status(201).json({ msg: "Admin created successfully", res: response });
     }
     catch (error) {
-        res.status(500).json({ msg: 'Error creating admin' });
+        res.status(500).json({ msg: "Error creating admin" });
     }
 }));
-routerA.post('/signin', (req, res) => {
-    // Implement signin logic here
-    res.send('Signin endpoint');
-});
-routerA.post('/products/addProducts', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+routerA.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { username, email, name } = req.body;
+    const inputValidation = adminSchema.safeParse({
+        username,
+        email,
+        name,
+    });
+    if (!inputValidation.success) {
+        return res.status(400).json({ msg: "Inputs are not valid" });
+    }
+    try {
+        const response = yield checkAdmin(username, email, name);
+        if (response.isAdmin) {
+            res
+                .status(201)
+                .json({ msg: "Admin Verified Successfully", res: response });
+        }
+        else {
+            res
+                .status(400)
+                .json({ msg: "Admin Access Denied", res: response });
+        }
+    }
+    catch (error) {
+        res.status(500).json({ msg: "Error Verifying admin" });
+    }
+}));
+routerA.post("/products/addProducts", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { category, productName, description, fabric, color, price } = req.body;
     try {
         const newProduct = yield insertProduct(category, productName, description, fabric, color, price);
-        res.status(201).json({ message: 'Product added successfully', product: newProduct });
+        res
+            .status(201)
+            .json({ message: "Product added successfully", product: newProduct });
     }
     catch (error) {
-        console.error('Error adding product:', error);
-        res.status(500).json({ message: 'Error adding product', error: error.message });
+        console.error("Error adding product:", error);
+        res
+            .status(500)
+            .json({ message: "Error adding product", error: error.message });
     }
 }));
-routerA.put('/orders/*', (req, res) => {
+routerA.put("/orders/*", (req, res) => {
     // Implement orders update logic here
-    res.send('Orders update endpoint');
+    res.send("Orders update endpoint");
 });
-routerA.get('/stats/*', (req, res) => {
+routerA.get("/stats/*", (req, res) => {
     // Implement stats retrieval logic here
-    res.send('Stats endpoint');
+    res.send("Stats endpoint");
 });
 exports.default = routerA;

@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import { z } from "zod";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Product } from "@prisma/client";
 import dotenv from "dotenv";
 
 const routerU = express.Router();
@@ -43,20 +43,18 @@ async function getAllUsers(): Promise<any[]> {
   }
 }
 
-async function getProductByID(id) {
+
+async function getProductByID(id: number): Promise<Product | null> {
   try {
-    const data = await prismaU.product.findUnique({
-      where: {
-        id: Number(id), // Ensure the ID is a number
-      },
+    const product = await prismaU.product.findUnique({
+      where: { id },
     });
-    return data;
+    return product;
   } catch (error) {
-    console.error('Error fetching product by ID:', error);
+    console.error("Error fetching product by ID:", error);
     throw error;
   }
 }
-
 
 
 async function getProductsByCategory(category: string): Promise<any[]> {
@@ -198,18 +196,28 @@ routerU.post("/signup", async (req: Request, res: Response) => {
     res.status(500).json({ msg: "Error creating user" });
   }
 });
-routerU.get("/products/:id", async (req: Request, res: Response) => {
+routerU.get("/products/ID/:id", async (req: Request, res: Response) => {
   const id = parseInt(req.params.id);
 
+  if (isNaN(id)) {
+    return res.status(400).json({ error: "Invalid product ID" });
+  }
+
   try {
-    const data = await getProductByID(id);
-    res.json(data);
+    const product = await getProductByID(id);
+    if (product) {
+      res.json(product);
+    } else {
+      res.status(404).json({ error: "Product not found" });
+    }
   } catch (error) {
-    res.status(500).send(`Error fetching ${id} products`);
+    console.error("Error fetching product:", error);
+    res.status(500).send("Error fetching product");
   }
 });
 routerU.get("/products/:category", async (req: Request, res: Response) => {
   const category = req.params.category;
+  console.log(category);
   try {
     const data = await getProductsByCategory(category);
     res.json(data);
@@ -234,8 +242,8 @@ routerU.get("/carts/getItems", async (req: Request, res: Response) => {
     const response = await getItems(userId);
     res.json(response);
   } catch (error) {
-    console.error("Error getting item from cart:", error);
     res.status(500).json({ error: "Failed to get item from cart" });
+    console.error("Error getting item from cart:", error);
   }
 });
 

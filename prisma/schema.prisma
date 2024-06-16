@@ -6,46 +6,47 @@ datasource db {
   provider = "postgres"
   url      = env("DATABASE_URL")
 }
+
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
+  id        Int    @id @default(autoincrement())
+  username  String @unique
   firstName String
   lastName  String
   carts     Cart[]
 }
 
 model Admin {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  firstName String
-  lastName  String
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  email    String
+  name     String
 }
 
 model Product {
-  id             Int     @id @default(autoincrement())
+  id              Int           @id @default(autoincrement())
   specialCategory String?
-  category       String
-  productName    String
-  description    String
-  fabric         String
-  color          String
-  price          Float
-  cartProducts   CartProduct[]
+  category        String
+  productName     String
+  description     String
+  fabric          String
+  color           String
+  price           Float
+  cartProducts    CartProduct[]
 }
 
 model Cart {
-  id          Int           @id @default(autoincrement())
-  ownerId     Int
-  owner       User          @relation(fields: [ownerId], references: [id])
+  id           Int           @id @default(autoincrement())
+  ownerId      Int
+  owner        User          @relation(fields: [ownerId], references: [id])
   cartProducts CartProduct[]
 }
 
 model CartProduct {
-  id        Int      @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   cartId    Int
   productId Int
-  cart      Cart     @relation(fields: [cartId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
-  
+  cart      Cart    @relation(fields: [cartId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+
   @@unique([cartId, productId])
 }
