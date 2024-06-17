@@ -15,6 +15,32 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const zod_1 = require("zod");
 const client_1 = require("@prisma/client");
+const multer_1 = __importDefault(require("multer"));
+const path_1 = __importDefault(require("path"));
+const storage = multer_1.default.diskStorage({
+    destination: "./../uploads/products/",
+    filename: function (req, file, cb) {
+        cb(null, file.fieldname + "-" + Date.now() + path_1.default.extname(file.originalname));
+    },
+});
+const upload = (0, multer_1.default)({
+    storage: storage,
+    limits: { fileSize: 10000000 }, // 10MB limit
+    fileFilter: function (req, file, cb) {
+        checkFileType(file, cb);
+    },
+}).single("productImage");
+function checkFileType(file, cb) {
+    const filetypes = /jpeg|jpg|png|gif/;
+    const extname = filetypes.test(path_1.default.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+    if (mimetype && extname) {
+        return cb(null, true);
+    }
+    else {
+        cb("Error: Images Only!");
+    }
+}
 const routerA = express_1.default.Router();
 const prismaA = new client_1.PrismaClient();
 routerA.use(express_1.default.json());
@@ -77,6 +103,24 @@ function deleteProductById(id) {
         }
     });
 }
+routerA.post("/upload", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    yield upload(req, res, (err) => {
+        if (err) {
+            res.status(400).json({ msg: err });
+        }
+        else {
+            if (req.file == undefined) {
+                res.status(400).json({ msg: "No file selected" });
+            }
+            else {
+                res.status(200).json({
+                    msg: "File uploaded",
+                    filePath: `/uploads/products/${req.file.filename}`,
+                });
+            }
+        }
+    });
+}));
 function checkAdmin(username, email, name) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
